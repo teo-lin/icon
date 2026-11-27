@@ -1,0 +1,19 @@
+.gitignore
+  s_eece807b704c3a::t_beba560500280c 1-2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d3208143a01d4ab9c2d4a187fd1ec4169756456f",
+  "prompts": {},
+  "sessions": {
+    "s_eece807b704c3a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "511ba333-3172-4079-88ef-2145fadb2ad5",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "teolin <teolin@gmail.com>"
+    }
+  }
+}
