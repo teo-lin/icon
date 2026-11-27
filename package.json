@@ -1,0 +1,40 @@
+{
+  "name": "repo-terminal-icon",
+  "displayName": "Repo Terminal Icon",
+  "description": "New terminals get the repo emoji as icon and a color per repo.",
+  "version": "0.0.1",
+  "publisher": "teolin",
+  "license": "MIT",
+  "private": true,
+  "engines": { "vscode": "^1.90.0" },
+  "main": "./extension.js",
+  "activationEvents": ["onStartupFinished"],
+  "contributes": {
+    "commands": [
+      {
+        "command": "repoTerminal.new",
+        "title": "New Repo Terminal",
+        "category": "Terminal",
+        "icon": "$(add)"
+      },
+      {
+        "command": "repoTerminal.split",
+        "title": "Split Repo Terminal",
+        "category": "Terminal",
+        "icon": "$(split-horizontal)"
+      }
+    ],
+    "keybindings": [
+      { "command": "repoTerminal.new", "key": "ctrl+shift+`", "mac": "ctrl+shift+`" },
+      { "command": "repoTerminal.split", "key": "ctrl+shift+5", "mac": "cmd+\\", "when": "terminalFocus" }
+    ],
+    "menus": {
+      "view/title": [
+        { "command": "repoTerminal.new", "when": "view == terminal", "group": "navigation@0" }
+      ],
+      "terminal/context": [
+        { "command": "repoTerminal.split", "group": "1_create" }
+      ]
+    }
+  }
+}
