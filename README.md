@@ -12,6 +12,7 @@ Gives each new terminal an icon and a color for its workspace folder, so you can
 | Command | Mac | Windows / Linux |
 |---|---|---|
 | **Terminal: New Repo Terminal** | `` Ctrl+Shift+` `` | `` Ctrl+Shift+` `` |
+| **Terminal: New Repo Terminal (Select Profile)** | | |
 | **Terminal: Split Repo Terminal** | `Cmd+\` | `Ctrl+Shift+5` |
 
-The new-terminal command is also the **+** button of the terminal panel. The split command is also in the terminal right-click menu.
+The new-terminal command is also the **+** button of the terminal panel, and the select-profile command is the **⌄** button next to it. It lists your terminal profiles (PowerShell, Git Bash, and so on) and starts the one you pick with the repo icon and color. The split command is also in the terminal right-click menu.

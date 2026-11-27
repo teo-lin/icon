@@ -2,7 +2,7 @@
   "name": "repo-terminal-icon",
   "displayName": "Repo Terminal Icon",
   "description": "New terminals get the repo emoji as icon and a color per repo.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "teolin",
   "license": "MIT",
   "icon": "icon.png",
@@ -20,6 +20,12 @@
         "icon": "$(add)"
       },
       {
+        "command": "repoTerminal.newWithProfile",
+        "title": "New Repo Terminal (Select Profile)",
+        "category": "Terminal",
+        "icon": "$(chevron-down)"
+      },
+      {
         "command": "repoTerminal.split",
         "title": "Split Repo Terminal",
         "category": "Terminal",
@@ -32,7 +38,8 @@
     ],
     "menus": {
       "view/title": [
-        { "command": "repoTerminal.new", "when": "view == terminal", "group": "navigation@0" }
+        { "command": "repoTerminal.new", "when": "view == terminal", "group": "navigation@0" },
+        { "command": "repoTerminal.newWithProfile", "when": "view == terminal", "group": "navigation@1" }
       ],
       "terminal/context": [
         { "command": "repoTerminal.split", "group": "1_create" }

@@ -53,10 +53,97 @@ function cwdOf(terminal) {
   return typeof cwd === 'string' ? vscode.Uri.file(cwd) : cwd;
 }
 
-async function newTerminal(context) {
+async function newTerminal(context, launch) {
   const folder = await chooseFolder();
   if (folder === null) return;
-  vscode.window.createTerminal({ cwd: folder?.uri, ...styleFor(context, folder) }).show();
+  vscode.window.createTerminal({ cwd: folder?.uri, ...launch, ...styleFor(context, folder) }).show();
+}
+
+const PLATFORM_KEY = { win32: 'windows', darwin: 'osx' }[process.platform] ?? 'linux';
+
+const expandEnv = (text) => text.replace(/\$\{env:([^}]+)\}/gi, (_, name) => process.env[name] ?? '');
+
+function isFile(file) {
+  try {
+    return fs.statSync(file).isFile();
+  } catch {
+    return false;
+  }
+}
+
+// Absolute paths are checked as they are. A bare name such as "bash" or "pwsh" is looked up on PATH,
+// the way VSCode's default Mac and Linux profiles are written.
+function resolveExecutable(candidate) {
+  const file = expandEnv(candidate);
+  if (path.isAbsolute(file)) return isFile(file) ? file : undefined;
+  if (/[\\/]/.test(file)) return undefined;
+  const extensions =
+    process.platform === 'win32' && !path.extname(file) ? (process.env.PATHEXT ?? '.EXE;.CMD').split(';') : [''];
+  for (const dir of (process.env.PATH ?? '').split(path.delimiter).filter(Boolean)) {
+    for (const extension of extensions) {
+      const full = path.join(dir, file + extension);
+      if (isFile(full)) return full;
+    }
+  }
+  return undefined;
+}
+
+const firstExisting = (paths) => paths.map(resolveExecutable).find(Boolean);
+
+// VSCode resolves "source" profiles internally and the extension API cannot, so look in the usual places.
+function findPowerShell() {
+  const base = path.join(process.env.ProgramFiles ?? '', 'PowerShell');
+  const versions = fs.existsSync(base) ? fs.readdirSync(base).filter((v) => /^\d+$/.test(v)).sort((a, b) => b - a) : [];
+  const pwsh = firstExisting(versions.map((v) => path.join(base, v, 'pwsh.exe')));
+  return pwsh ?? firstExisting(['${env:windir}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe']);
+}
+
+// Mac and Linux: the "pwsh" source.
+function findPwsh() {
+  return firstExisting(['pwsh', '/usr/local/bin/pwsh', '/opt/homebrew/bin/pwsh', '/usr/bin/pwsh', '/snap/bin/pwsh']);
+}
+
+function findGitBash() {
+  return firstExisting([
+    '${env:ProgramFiles}\\Git\\bin\\bash.exe',
+    '${env:ProgramFiles(x86)}\\Git\\bin\\bash.exe',
+    '${env:LOCALAPPDATA}\\Programs\\Git\\bin\\bash.exe',
+  ]);
+}
+
+function resolveProfile(profile) {
+  let shellPath;
+  let shellArgs = profile.args;
+  if (profile.path) shellPath = firstExisting([].concat(profile.path));
+  else if (profile.source === 'PowerShell') shellPath = findPowerShell();
+  else if (profile.source === 'pwsh') shellPath = findPwsh();
+  else if (profile.source === 'Git Bash') {
+    shellPath = findGitBash();
+    shellArgs ??= ['--login', '-i'];
+  }
+  return shellPath ? { shellPath, shellArgs, env: profile.env } : undefined;
+}
+
+async function pickProfile() {
+  const configuration = vscode.workspace.getConfiguration('terminal.integrated');
+  const profiles = configuration.get(`profiles.${PLATFORM_KEY}`) ?? {};
+  const defaultName = configuration.get(`defaultProfile.${PLATFORM_KEY}`);
+  const names = Object.keys(profiles).filter((name) => profiles[name]);
+  names.sort((a, b) => (b === defaultName) - (a === defaultName));
+  const items = names.map((name) => ({ label: name, description: name === defaultName ? 'default' : undefined }));
+  const choice = await vscode.window.showQuickPick(items, { placeHolder: 'Select the terminal profile to start' });
+  return choice && { name: choice.label, profile: profiles[choice.label] };
+}
+
+async function newTerminalWithProfile(context) {
+  const choice = await pickProfile();
+  if (!choice) return;
+  const launch = resolveProfile(choice.profile);
+  if (launch) return newTerminal(context, launch);
+  vscode.window.showWarningMessage(
+    `Repo Terminal: cannot find the shell for "${choice.name}". VSCode's own profile is used, without the repo icon.`,
+  );
+  return vscode.commands.executeCommand('workbench.action.terminal.newWithProfile', { profileName: choice.name });
 }
 
 async function splitTerminal(context) {
@@ -72,6 +159,7 @@ async function splitTerminal(context) {
 function activate(context) {
   context.subscriptions.push(
     vscode.commands.registerCommand('repoTerminal.new', () => newTerminal(context)),
+    vscode.commands.registerCommand('repoTerminal.newWithProfile', () => newTerminalWithProfile(context)),
     vscode.commands.registerCommand('repoTerminal.split', () => splitTerminal(context)),
   );
 }
