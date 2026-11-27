@@ -6,6 +6,7 @@
   "publisher": "teolin",
   "license": "MIT",
   "private": true,
+  "repository": { "type": "git", "url": "https://github.com/teo-lin/icon.git" },
   "engines": { "vscode": "^1.90.0" },
   "main": "./extension.js",
   "activationEvents": ["onStartupFinished"],
